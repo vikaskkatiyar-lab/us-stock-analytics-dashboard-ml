@@ -1154,7 +1154,7 @@ def render_ml_prediction_review_view(review_history: pd.DataFrame, accuracy_by_d
           </div>
           <div class="review-nav-card">
             <h4>Stock By Date</h4>
-            <p>Audit every stock in a wide table where each date adds Direction, High, Low, and High/Low Quality columns.</p>
+            <p>Audit every stock in a wide table where each date adds close direction, high, low, and dollar movement comparison columns.</p>
             <a href="#stock-by-date">Open wide table</a>
           </div>
         </div>
@@ -1241,23 +1241,21 @@ def render_ml_prediction_review_view(review_history: pd.DataFrame, accuracy_by_d
         st.markdown('<a id="stock-by-date"></a>', unsafe_allow_html=True)
         st.markdown("**Stock prediction audit by date**")
         st.caption(
-            "Each prediction date adds four columns: Direction, High, Low, and High/Low Quality. "
-            "Direction is green when Up/Down was correct and red when it was wrong. "
-            "High/Low Quality means Accurate within 5%, Close within 15%, Incorrect above 15%."
+            "Each prediction date adds four columns: Daily Close Direction, High, Low, and High/Low $ Movement. "
+            "Daily Close Direction is green when predicted Up/Down matched the next trading day's closing direction. "
+            "Movement is green within +/- $1, red when actual movement was at least $2 less than predicted, and blue when actual movement was at least $2 more than predicted."
         )
 
         def highlight_direction_cells(value):
             text = str(value)
-            if text.startswith("Correct"):
+            if text.startswith("Correct") or text.startswith("Close"):
                 return "background-color: #dcfce7; color: #166534;"
-            if text.startswith("Wrong"):
+            if text.startswith("Wrong") or text.startswith("Less than predicted"):
                 return "background-color: #fee2e2; color: #991b1b;"
-            if text.startswith("Accurate"):
-                return "background-color: #dcfce7; color: #166534;"
-            if text.startswith("Close"):
+            if text.startswith("More than predicted"):
+                return "background-color: #dbeafe; color: #1e40af;"
+            if text.startswith("Near"):
                 return "background-color: #fef9c3; color: #854d0e;"
-            if text.startswith("Incorrect"):
-                return "background-color: #fee2e2; color: #991b1b;"
             return ""
 
         styled_wide_audit = wide_audit.style.map(highlight_direction_cells)

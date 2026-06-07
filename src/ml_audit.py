@@ -152,8 +152,8 @@ def _direction_summary(row: pd.Series) -> str:
     predicted = row.get("predicted_direction", "")
     actual = row.get("actual_direction", "")
     if bool(row.get("correct_prediction", False)):
-        return f"Correct: predicted {predicted}; actual {actual}"
-    return f"Wrong: predicted {predicted}; actual {actual}"
+        return f"Correct close: predicted {predicted}; actual close {actual}"
+    return f"Wrong close: predicted {predicted}; actual close {actual}"
 
 
 def _price_summary(predicted, actual) -> str:
@@ -162,19 +162,23 @@ def _price_summary(predicted, actual) -> str:
     return f"Predicted {float(predicted):.2f} (Actual {float(actual):.2f})"
 
 
-def _high_low_quality(row: pd.Series) -> str:
-    high_miss = row.get("high_absolute_error_pct")
-    low_miss = row.get("low_absolute_error_pct")
-    if pd.isna(high_miss) or pd.isna(low_miss):
+def _movement_summary(row: pd.Series) -> str:
+    predicted = row.get("predicted_next_day_range")
+    actual = row.get("actual_next_day_range")
+    if pd.isna(predicted) or pd.isna(actual):
         return ""
-    worst_miss = max(float(high_miss), float(low_miss))
-    if worst_miss <= 5:
-        label = "Accurate"
-    elif worst_miss <= 15:
+    predicted = float(predicted)
+    actual = float(actual)
+    difference = actual - predicted
+    if abs(difference) <= 1:
         label = "Close"
+    elif difference <= -2:
+        label = "Less than predicted"
+    elif difference >= 2:
+        label = "More than predicted"
     else:
-        label = "Incorrect"
-    return f"{label}: high miss {float(high_miss):.1f}%, low miss {float(low_miss):.1f}%"
+        label = "Near"
+    return f"{label}: predicted move ${predicted:.2f} (Actual ${actual:.2f}); difference ${difference:+.2f}"
 
 
 def build_stock_daily_audit_wide(review_history: pd.DataFrame, max_dates: Optional[int] = None) -> pd.DataFrame:
@@ -192,7 +196,7 @@ def build_stock_daily_audit_wide(review_history: pd.DataFrame, max_dates: Option
         lambda row: _price_summary(row.get("predicted_next_day_low"), row.get("actual_next_day_low")),
         axis=1,
     )
-    frame["quality_cell"] = frame.apply(_high_low_quality, axis=1)
+    frame["movement_cell"] = frame.apply(_movement_summary, axis=1)
 
     ordered_dates = sorted(frame["prediction_as_of_date"].dropna().unique().tolist(), reverse=True)
     if max_dates is not None:
@@ -206,18 +210,18 @@ def build_stock_daily_audit_wide(review_history: pd.DataFrame, max_dates: Option
         output_row = {"Stock": stock}
         for date in ordered_dates:
             if date not in stock_rows.index:
-                output_row[f"{date} Direction"] = ""
+                output_row[f"{date} Daily Close Direction"] = ""
                 output_row[f"{date} High"] = ""
                 output_row[f"{date} Low"] = ""
-                output_row[f"{date} High/Low Quality"] = ""
+                output_row[f"{date} High/Low $ Movement"] = ""
                 continue
             row = stock_rows.loc[date]
             if isinstance(row, pd.DataFrame):
                 row = row.iloc[0]
-            output_row[f"{date} Direction"] = row["direction_cell"]
+            output_row[f"{date} Daily Close Direction"] = row["direction_cell"]
             output_row[f"{date} High"] = row["high_cell"]
             output_row[f"{date} Low"] = row["low_cell"]
-            output_row[f"{date} High/Low Quality"] = row["quality_cell"]
+            output_row[f"{date} High/Low $ Movement"] = row["movement_cell"]
         rows.append(output_row)
 
     return pd.DataFrame(rows)

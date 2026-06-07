@@ -19,11 +19,13 @@ def _format_value(value):
 
 def _cell_style(value) -> str:
     text = str(value)
-    if text.startswith("Correct") or text.startswith("Accurate"):
+    if text.startswith("Correct") or text.startswith("Close"):
         return " style='background:#dcfce7;color:#166534;'"
-    if text.startswith("Wrong") or text.startswith("Incorrect"):
+    if text.startswith("Wrong") or text.startswith("Less than predicted"):
         return " style='background:#fee2e2;color:#991b1b;'"
-    if text.startswith("Close"):
+    if text.startswith("More than predicted"):
+        return " style='background:#dbeafe;color:#1e40af;'"
+    if text.startswith("Near"):
         return " style='background:#fef9c3;color:#854d0e;'"
     return ""
 
@@ -142,7 +144,7 @@ def build_ml_html_report(
     </div>
     <div class="nav-card">
       <h3>Stock By Date</h3>
-      <p>Wide audit table where every prediction date adds Direction, High, Low, and High/Low Quality columns.</p>
+      <p>Wide audit table where every prediction date adds close direction, high, low, and dollar movement comparison columns.</p>
       <a href="#stock-by-date">Open wide table</a>
     </div>
     <div class="nav-card">
@@ -160,7 +162,7 @@ def build_ml_html_report(
   <p class="muted">This table shows the number of calls reviewed, how many directions were correct or wrong, the high/low miss percentages, the overall score, and whether performance improved or worsened versus the prior prediction date.</p>
   {_table_html(daily_trend, trend_cols, 80)}
   <h2 id="stock-by-date">Stock Prediction Audit By Date</h2>
-  <p class="muted">Each prediction date adds four columns: Direction, High, Low, and High/Low Quality. Direction says whether Up/Down was correct. High and Low show predicted value with actual value in brackets. Quality is Accurate within 5%, Close within 15%, and Incorrect above 15%.</p>
+  <p class="muted">Each prediction date adds four columns: Daily Close Direction, High, Low, and High/Low $ Movement. Daily Close Direction compares predicted Up/Down against whether the next trading day's closing price actually closed up or down/flat. High/Low $ Movement compares predicted high-low dollar movement against actual high-low dollar movement: green means within +/- $1, red means actual movement was at least $2 less than predicted, blue means actual movement was at least $2 more than predicted.</p>
   {_table_html(stock_daily_audit_wide, wide_audit_cols, 250)}
   <h2 id="audit-history">Prediction Audit History</h2>
   <p class="muted">This table is built for looking back by stock and date. Direction score is 100 when Up/Down was correct and 0 when wrong. If direction is wrong, the overall result is a failure even when high/low prices are close.</p>
