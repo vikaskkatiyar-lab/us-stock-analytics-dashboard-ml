@@ -1342,12 +1342,11 @@ def render_model_limitations_view():
     )
 
 
-st.set_page_config(page_title="Stock Analytics Dashboard", layout="wide")
-st.title("Stock Analytics Dashboard")
+st.set_page_config(page_title="ML Stock Prediction Dashboard", layout="wide")
+st.title("ML Stock Prediction Dashboard")
 st.write(
-    "Use this local dashboard to explore the latest stock monitor data, screen for "
-    "recent price movement patterns, and download either the filtered results or "
-    "the full generated CSV files."
+    "Review next-day ML predictions, compare predicted Up/Down, high, and low against actual market results, "
+    "and track whether prediction quality improves or worsens by date."
 )
 
 if not PRICE_HISTORY_FILE.exists() or not DAILY_REPORT_FILE.exists():
@@ -1376,6 +1375,12 @@ ml_summary = load_optional_csv(ML_SUMMARY_FILE, file_mtime(ML_SUMMARY_FILE))
 analysis_type = st.sidebar.selectbox(
     "Analysis type",
     [
+        "ML daily prediction review",
+        "ML signals",
+        "ML backtest",
+        "Agentic insights",
+        "Model explanation",
+        "Model limitations",
         "One year performance",
         "Daily dollar move range",
         "Positive closes",
@@ -1391,12 +1396,6 @@ analysis_type = st.sidebar.selectbox(
         "Top 10 picks vs actual results",
         "Sector Outlook",
         "Historical Learning Backtest",
-        "ML signals",
-        "ML daily prediction review",
-        "ML backtest",
-        "Agentic insights",
-        "Model explanation",
-        "Model limitations",
         "Ask a stock question",
     ],
 )
@@ -1426,9 +1425,9 @@ if analysis_type == "Single stock trader view":
 
 with st.expander("How to use this dashboard"):
     st.write(
-        "Choose an analysis type in the sidebar, adjust the filters, then review "
-        "the matching stocks in the table. The current filtered view can be "
-        "downloaded separately from the full source files."
+        "Start with ML daily prediction review to audit what the model predicted versus what actually happened. "
+        "Use ML signals for the latest unevaluated next-trading-day predictions. The original rule-based screens "
+        "are still available lower in the sidebar for comparison."
     )
     for name, explanation in ANALYSIS_EXPLANATIONS.items():
         st.markdown(f"**{name}:** {explanation}")
