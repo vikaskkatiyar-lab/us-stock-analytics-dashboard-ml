@@ -2,6 +2,14 @@ import pandas as pd
 from typing import Optional
 
 
+def _stock_label(row: pd.Series) -> str:
+    symbol = str(row.get("symbol", row.get("Stock", "")))
+    company = row.get("companyName", "")
+    if pd.isna(company) or not str(company).strip() or str(company) == symbol:
+        return symbol
+    return f"{symbol} - {company}"
+
+
 def build_plain_prediction_audit(review_history: pd.DataFrame) -> pd.DataFrame:
     if review_history.empty:
         return pd.DataFrame()
@@ -14,7 +22,7 @@ def build_plain_prediction_audit(review_history: pd.DataFrame) -> pd.DataFrame:
         {
             "Prediction Date": frame["prediction_as_of_date"],
             "Checked Against Date": frame["actual_review_date"],
-            "Stock": frame["symbol"],
+            "Stock": frame.apply(_stock_label, axis=1),
             "Predicted Up/Down": frame["predicted_direction"],
             "Actual Up/Down": frame["actual_direction"],
             "Direction Result": frame["prediction_review"],
@@ -61,12 +69,12 @@ def build_stock_accuracy_trend(review_history: pd.DataFrame) -> pd.DataFrame:
     frame["prediction_as_of_date"] = pd.to_datetime(frame["prediction_as_of_date"], errors="coerce").dt.date.astype(str)
     return frame[[
         "symbol",
+        "companyName",
         "prediction_as_of_date",
         "plain_overall_accuracy_pct",
         "plain_result",
-    ]].rename(
+    ]].assign(Stock=lambda value: value.apply(_stock_label, axis=1)).drop(columns=["symbol", "companyName"]).rename(
         columns={
-            "symbol": "Stock",
             "prediction_as_of_date": "Prediction Date",
             "plain_overall_accuracy_pct": "Overall Accuracy %",
             "plain_result": "Overall Result",
@@ -80,14 +88,15 @@ def build_stock_accuracy_pivot(review_history: pd.DataFrame, value_column: str =
 
     frame = review_history.copy()
     frame["prediction_as_of_date"] = pd.to_datetime(frame["prediction_as_of_date"], errors="coerce").dt.date.astype(str)
+    frame["stock_label"] = frame.apply(_stock_label, axis=1)
     pivot = frame.pivot_table(
-        index="symbol",
+        index="stock_label",
         columns="prediction_as_of_date",
         values=value_column,
         aggfunc="first",
     )
     ordered_dates = sorted(pivot.columns.tolist(), reverse=True)
-    pivot = pivot[ordered_dates].reset_index().rename(columns={"symbol": "Stock"})
+    pivot = pivot[ordered_dates].reset_index().rename(columns={"stock_label": "Stock"})
     return pivot
 
 
@@ -118,14 +127,15 @@ def build_stock_accuracy_verdict_pivot(review_history: pd.DataFrame) -> pd.DataF
         lambda row: _score_label(row["plain_overall_accuracy_pct"], row["plain_result"]),
         axis=1,
     )
+    frame["stock_label"] = frame.apply(_stock_label, axis=1)
     pivot = frame.pivot_table(
-        index="symbol",
+        index="stock_label",
         columns="prediction_as_of_date",
         values="display_score",
         aggfunc="first",
     )
     ordered_dates = sorted(pivot.columns.tolist(), reverse=True)
-    pivot = pivot[ordered_dates].reset_index().rename(columns={"symbol": "Stock"})
+    pivot = pivot[ordered_dates].reset_index().rename(columns={"stock_label": "Stock"})
     pivot = pivot.rename(columns={date: f"{date} score" for date in ordered_dates})
     return pivot
 
@@ -180,10 +190,11 @@ def build_stock_daily_audit_wide(review_history: pd.DataFrame, max_dates: Option
     if max_dates is not None:
         ordered_dates = ordered_dates[:max_dates]
 
-    stocks = sorted(frame["symbol"].dropna().unique().tolist())
+    frame["stock_label"] = frame.apply(_stock_label, axis=1)
+    stocks = sorted(frame["stock_label"].dropna().unique().tolist())
     rows = []
     for stock in stocks:
-        stock_rows = frame[frame["symbol"] == stock].set_index("prediction_as_of_date")
+        stock_rows = frame[frame["stock_label"] == stock].set_index("prediction_as_of_date")
         output_row = {"Stock": stock}
         for date in ordered_dates:
             if date not in stock_rows.index:

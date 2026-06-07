@@ -4,6 +4,7 @@ import sys
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 import yfinance as yf
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -44,6 +45,7 @@ ML_BACKTEST_FILE = BASE_DIR / "data" / "ml_backtest.csv"
 ML_REVIEW_HISTORY_FILE = BASE_DIR / "data" / "ml_prediction_review_history.csv"
 ML_ACCURACY_BY_DATE_FILE = BASE_DIR / "data" / "ml_accuracy_by_date.csv"
 ML_SUMMARY_FILE = BASE_DIR / "reports" / "ml_summary.csv"
+ML_HTML_REPORT_FILE = BASE_DIR / "reports" / "ml_dashboard.html"
 
 ANALYSIS_EXPLANATIONS = {
     "One year performance": (
@@ -1353,6 +1355,10 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+if ML_HTML_REPORT_FILE.exists():
+    components.html(ML_HTML_REPORT_FILE.read_text(encoding="utf-8"), height=12000, scrolling=True)
+    st.stop()
+
 st.title("ML Stock Prediction Dashboard")
 st.write(
     "Review next-day ML predictions, compare predicted Up/Down, high, and low against actual market results, "

@@ -95,6 +95,7 @@ def build_backtest(test: pd.DataFrame, model, model_name: str) -> pd.DataFrame:
             "actual_review_date": frame["target_date"],
             "date": frame["date"],
             "symbol": frame["symbol"],
+            "companyName": frame.get("companyName", frame["symbol"]),
             "predicted_direction": predicted_direction,
             "actual_direction": actual_direction,
             "prediction_review": prediction_review,
