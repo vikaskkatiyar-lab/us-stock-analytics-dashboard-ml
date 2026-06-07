@@ -1354,7 +1354,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 if ML_HTML_REPORT_FILE.exists():
-    components.html(ML_HTML_REPORT_FILE.read_text(encoding="utf-8"), height=12000, scrolling=True)
+    html_report = ML_HTML_REPORT_FILE.read_text(encoding="utf-8")
+    if hasattr(st, "html"):
+        st.html(html_report)
+    else:
+        components.html(html_report, height=950, scrolling=True)
     st.stop()
 
 st.title("ML Stock Prediction Dashboard")
