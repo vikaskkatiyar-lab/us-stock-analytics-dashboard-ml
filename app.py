@@ -1214,14 +1214,14 @@ def render_ml_prediction_review_view(review_history: pd.DataFrame, accuracy_by_d
     st.caption(
         "This is the human audit view: predicted values are next to actual values. If the Up/Down direction is wrong, the overall result is a failure even when high/low prices are close."
     )
-    st.dataframe(format_for_display(audit_display), width="stretch", hide_index=True, height=430)
+    st.dataframe(format_for_display(audit_display), width="stretch", hide_index=True, height=620)
 
     st.markdown('<a id="selected-stock-trend"></a>', unsafe_allow_html=True)
     st.markdown("**Day-on-day accuracy trend for selected stock**")
     stock_trend_display = audit_display[
         ["Prediction Date", "Overall Accuracy %", "Overall Result", "Direction Result", "High Miss %", "Low Miss %"]
     ].copy()
-    st.dataframe(format_for_display(stock_trend_display), width="stretch", hide_index=True, height=260)
+    st.dataframe(format_for_display(stock_trend_display), width="stretch", hide_index=True, height=360)
 
     if not accuracy_by_date.empty:
         daily_summary = accuracy_by_date.sort_values("date", ascending=False).head(lookback_days).copy()
@@ -1232,7 +1232,7 @@ def render_ml_prediction_review_view(review_history: pd.DataFrame, accuracy_by_d
         summary_cols = [col for col in summary_cols if col in daily_summary.columns]
         st.markdown('<a id="market-scorecard"></a>', unsafe_allow_html=True)
         st.markdown("**Market-wide daily scorecard**")
-        st.dataframe(format_for_display(daily_summary[summary_cols]), width="stretch", hide_index=True, height=260)
+        st.dataframe(format_for_display(daily_summary[summary_cols]), width="stretch", hide_index=True, height=360)
 
     wide_audit = build_stock_daily_audit_wide(history, max_dates=lookback_days)
     if not wide_audit.empty:
@@ -1259,7 +1259,7 @@ def render_ml_prediction_review_view(review_history: pd.DataFrame, accuracy_by_d
             return ""
 
         styled_wide_audit = wide_audit.style.map(highlight_direction_cells)
-        st.dataframe(styled_wide_audit, width="stretch", hide_index=True, height=520)
+        st.dataframe(styled_wide_audit, width="stretch", hide_index=True, height=780)
 
     st.download_button(
         "Download stock prediction audit by date",
@@ -1290,7 +1290,7 @@ def render_ml_backtest_view(backtest: pd.DataFrame, accuracy_by_date: pd.DataFra
 
     st.markdown("**Backtest rows**")
     display = format_for_display(backtest)
-    st.dataframe(display, width="stretch", hide_index=True, height=520)
+    st.dataframe(display, width="stretch", hide_index=True, height=780)
     st.download_button(
         "Download ML backtest",
         data=backtest.to_csv(index=False).encode("utf-8"),
@@ -1343,6 +1343,16 @@ def render_model_limitations_view():
 
 
 st.set_page_config(page_title="ML Stock Prediction Dashboard", layout="wide")
+st.markdown(
+    """
+    <style>
+      [data-testid="stSidebar"] { display: none; }
+      [data-testid="collapsedControl"] { display: none; }
+      .block-container { padding-top: 2rem; max-width: 98vw; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 st.title("ML Stock Prediction Dashboard")
 st.write(
     "Review next-day ML predictions, compare predicted Up/Down, high, and low against actual market results, "
@@ -1371,6 +1381,32 @@ ml_backtest = load_optional_csv(ML_BACKTEST_FILE, file_mtime(ML_BACKTEST_FILE))
 ml_review_history = load_optional_csv(ML_REVIEW_HISTORY_FILE, file_mtime(ML_REVIEW_HISTORY_FILE))
 ml_accuracy_by_date = load_optional_csv(ML_ACCURACY_BY_DATE_FILE, file_mtime(ML_ACCURACY_BY_DATE_FILE))
 ml_summary = load_optional_csv(ML_SUMMARY_FILE, file_mtime(ML_SUMMARY_FILE))
+
+review_tab, signals_tab, backtest_tab, insights_tab, explanation_tab, limitations_tab = st.tabs(
+    [
+        "Daily Review",
+        "Next-Day Predictions",
+        "Backtest",
+        "Insights",
+        "Model Explanation",
+        "Limitations",
+    ]
+)
+
+with review_tab:
+    render_ml_prediction_review_view(ml_review_history, ml_accuracy_by_date)
+with signals_tab:
+    render_ml_signals_view(ml_predictions, ml_accuracy_by_date)
+with backtest_tab:
+    render_ml_backtest_view(ml_backtest, ml_accuracy_by_date)
+with insights_tab:
+    render_agentic_insights_view(ml_summary)
+with explanation_tab:
+    render_model_explanation_view()
+with limitations_tab:
+    render_model_limitations_view()
+
+st.stop()
 
 analysis_type = st.sidebar.selectbox(
     "Analysis type",
