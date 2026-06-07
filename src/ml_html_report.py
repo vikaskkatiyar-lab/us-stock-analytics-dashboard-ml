@@ -68,11 +68,6 @@ def build_ml_html_report(
         "predicted_next_day_low", "predicted_next_day_range", "stock_level_accuracy",
         "stock_range_accuracy_pct",
     ]
-    accuracy_cols = [
-        "date", "number_of_predictions", "direction_accuracy",
-        "average_high_miss_pct", "average_low_miss_pct",
-        "average_plain_overall_accuracy_pct",
-    ]
     sort_cols = ["prediction_as_of_date", "symbol"] if "prediction_as_of_date" in backtest.columns else ["date", "symbol"]
     review_history = backtest.sort_values(sort_cols, ascending=[False, True])
     plain_audit = build_plain_prediction_audit(review_history)
@@ -86,9 +81,10 @@ def build_ml_html_report(
         "Overall Accuracy %", "Overall Result",
     ]
     trend_cols = [
-        "Prediction Date", "Stocks_Reviewed", "Direction_Accuracy_Pct",
-        "Average_High_Miss_Pct", "Average_Low_Miss_Pct",
-        "Overall_Accuracy_Pct", "Trend vs Previous Date", "Change vs Previous Date",
+        "Prediction Date", "Stocks Reviewed", "Correct Direction Calls",
+        "Wrong Direction Calls", "Predicted Up", "Predicted Down or Flat",
+        "Direction Accuracy %", "Average High Miss %", "Average Low Miss %",
+        "Overall Accuracy %", "Trend vs Previous Date", "Change vs Previous Date",
     ]
     wide_audit_cols = stock_daily_audit_wide.columns.tolist() if not stock_daily_audit_wide.empty else []
 
@@ -140,8 +136,8 @@ def build_ml_html_report(
       <a href="#next-day-predictions">Open table</a>
     </div>
     <div class="nav-card">
-      <h3>Daily Trend</h3>
-      <p>Market-wide day-by-day performance across reviewed stocks, including direction accuracy and high/low miss percentages.</p>
+      <h3>Daily Performance</h3>
+      <p>One combined table for market-wide daily performance: direction calls, high/low misses, overall score, and trend versus the prior date.</p>
       <a href="#daily-trend">Open trend</a>
     </div>
     <div class="nav-card">
@@ -160,10 +156,8 @@ def build_ml_html_report(
   <h2 id="next-day-predictions">Next Day Predictions</h2>
   <p class="muted">These rows are the latest unevaluated predictions. The prediction_as_of_date column shows the exact data date used. expected_next_trading_date is listed as after that date until new market data identifies the actual next trading date.</p>
   {_table_html(predictions, next_day_cols, 100)}
-  <h2 id="market-scorecard">Market-Wide Daily Scorecard</h2>
-  {_table_html(accuracy_by_date, accuracy_cols, 80)}
-  <h2 id="daily-trend">Day-On-Day Accuracy Trend</h2>
-  <p class="muted">This shows whether overall prediction quality improved or got worse from one prediction date to the next.</p>
+  <h2 id="daily-trend">Daily Prediction Performance</h2>
+  <p class="muted">This table shows the number of calls reviewed, how many directions were correct or wrong, the high/low miss percentages, the overall score, and whether performance improved or worsened versus the prior prediction date.</p>
   {_table_html(daily_trend, trend_cols, 80)}
   <h2 id="stock-by-date">Stock Prediction Audit By Date</h2>
   <p class="muted">Each prediction date adds four columns: Direction, High, Low, and High/Low Quality. Direction says whether Up/Down was correct. High and Low show predicted value with actual value in brackets. Quality is Accurate within 5%, Close within 15%, and Incorrect above 15%.</p>

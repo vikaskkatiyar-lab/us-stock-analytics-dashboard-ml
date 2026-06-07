@@ -46,18 +46,26 @@ def build_daily_accuracy_trend(review_history: pd.DataFrame) -> pd.DataFrame:
 
     frame = review_history.copy()
     frame["prediction_as_of_date"] = pd.to_datetime(frame["prediction_as_of_date"], errors="coerce").dt.date.astype(str)
+    frame["predicted_up"] = frame["predicted_direction"].eq("Up")
+    frame["predicted_down_or_flat"] = frame["predicted_direction"].ne("Up")
     grouped = frame.groupby("prediction_as_of_date").agg(
-        Stocks_Reviewed=("symbol", "count"),
-        Direction_Accuracy_Pct=("correct_prediction", lambda values: values.astype(bool).mean() * 100),
-        Average_High_Miss_Pct=("high_absolute_error_pct", "mean"),
-        Average_Low_Miss_Pct=("low_absolute_error_pct", "mean"),
-        Overall_Accuracy_Pct=("plain_overall_accuracy_pct", "mean"),
+        **{
+            "Stocks Reviewed": ("symbol", "count"),
+            "Correct Direction Calls": ("correct_prediction", lambda values: int(values.astype(bool).sum())),
+            "Wrong Direction Calls": ("correct_prediction", lambda values: int((~values.astype(bool)).sum())),
+            "Predicted Up": ("predicted_up", "sum"),
+            "Predicted Down or Flat": ("predicted_down_or_flat", "sum"),
+            "Direction Accuracy %": ("correct_prediction", lambda values: values.astype(bool).mean() * 100),
+            "Average High Miss %": ("high_absolute_error_pct", "mean"),
+            "Average Low Miss %": ("low_absolute_error_pct", "mean"),
+            "Overall Accuracy %": ("plain_overall_accuracy_pct", "mean"),
+        }
     ).reset_index()
     grouped = grouped.rename(columns={"prediction_as_of_date": "Prediction Date"})
-    grouped["Trend vs Previous Date"] = grouped["Overall_Accuracy_Pct"].diff().apply(
+    grouped["Trend vs Previous Date"] = grouped["Overall Accuracy %"].diff().apply(
         lambda value: "First date" if pd.isna(value) else ("Improved" if value > 0 else ("Worse" if value < 0 else "No change"))
     )
-    grouped["Change vs Previous Date"] = grouped["Overall_Accuracy_Pct"].diff()
+    grouped["Change vs Previous Date"] = grouped["Overall Accuracy %"].diff()
     return grouped.sort_values("Prediction Date", ascending=False)
 
 

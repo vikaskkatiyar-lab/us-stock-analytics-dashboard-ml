@@ -1219,7 +1219,7 @@ def render_ml_prediction_review_view(review_history: pd.DataFrame, accuracy_by_d
     st.dataframe(format_for_display(audit_display), width="stretch", hide_index=True, height=620)
 
     st.markdown('<a id="selected-stock-trend"></a>', unsafe_allow_html=True)
-    st.markdown("**Day-on-day accuracy trend for selected stock**")
+    st.markdown("**Selected stock recent accuracy**")
     stock_trend_display = audit_display[
         ["Prediction Date", "Overall Accuracy %", "Overall Result", "Direction Result", "High Miss %", "Low Miss %"]
     ].copy()
@@ -1233,7 +1233,7 @@ def render_ml_prediction_review_view(review_history: pd.DataFrame, accuracy_by_d
         ]
         summary_cols = [col for col in summary_cols if col in daily_summary.columns]
         st.markdown('<a id="market-scorecard"></a>', unsafe_allow_html=True)
-        st.markdown("**Market-wide daily scorecard**")
+        st.markdown("**Daily prediction performance**")
         st.dataframe(format_for_display(daily_summary[summary_cols]), width="stretch", hide_index=True, height=360)
 
     wide_audit = build_stock_daily_audit_wide(history, max_dates=lookback_days)
