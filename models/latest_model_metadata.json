@@ -1,0 +1,33 @@
+{
+  "selected_model": "logistic_regression",
+  "split_date": "2026-03-13",
+  "train_rows": 57250,
+  "test_rows": 14500,
+  "feature_columns": [
+    "return_1d_pct",
+    "return_5d_pct",
+    "return_10d_pct",
+    "return_20d_pct",
+    "volatility_20d",
+    "average_daily_movement",
+    "positive_close_streak",
+    "distance_from_20d_high_pct",
+    "distance_from_1y_high_pct",
+    "drawdown_from_1y_high_pct",
+    "volume_change_pct"
+  ],
+  "model_comparison": [
+    {
+      "direction_accuracy": 0.5093793103448276,
+      "precision_predicted_up": 0.533794404275385,
+      "average_prediction_confidence": 0.050278747816124826,
+      "model_name": "logistic_regression"
+    },
+    {
+      "direction_accuracy": 0.4937241379310345,
+      "precision_predicted_up": 0.5125696594427245,
+      "average_prediction_confidence": 0.11601721620682372,
+      "model_name": "random_forest"
+    }
+  ]
+}
